@@ -67,11 +67,11 @@ impl From<tokio::sync::mpsc::error::SendError<Vec<u8>>> for NetworkError {
     }
 }
 
-impl From<bincode::error> for NetworkError {
-    fn from(error: bincode::error) -> Self {
-        NetworkError::SerializationError(error.to_string())
-    }
-}
+// impl From<bincode::error> for NetworkError {
+//     fn from(error: bincode::error) -> Self {
+//         NetworkError::SerializationError(error.to_string())
+//     }
+// }
 
 impl From<&str> for NetworkError {
     fn from(msg: &str) -> Self {

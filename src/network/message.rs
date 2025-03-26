@@ -3,6 +3,7 @@ use std::fmt;
 use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
+use rand::thread_rng;
 use secp256k1_zkp::{Keypair, Message as Secp256k1Message, XOnlyPublicKey, Secp256k1};
 use secp256k1_zkp::schnorr::Signature;
 use bitcoin::hashes::{Hash, sha256, HashEngine};
@@ -99,7 +100,7 @@ impl Message {
 
         // Sign the message hash
         let secp = Secp256k1::new();
-        let sig = secp.sign_schnorr(&secp_msg, keypair);
+        let sig = secp.sign_schnorr(&secp_msg, &keypair);
 
         // Store the signature
         self.signature = sig.as_ref().to_vec();
@@ -155,9 +156,10 @@ mod tests {
 
     #[test]
     fn test_message_signing_and_verification() {
+
         // Create a keypair
         let secp = Secp256k1::new();
-        let keypair = Keypair::new(&secp, &mut rand::rng());
+        let keypair = Keypair::new(&secp, &mut thread_rng());
         let (pubkey, _) = keypair.x_only_public_key();
 
         // Create a message
