@@ -3,6 +3,8 @@ mod error;
 mod peer;
 mod transport;
 mod discovery;
+mod service;
+mod message_handler;
 
 pub use self::message::MessageType;
 // pub use self::service::NetworkService;

@@ -3,6 +3,7 @@ use std::fmt;
 use uuid::Uuid;
 use std::time::{SystemTime, UNIX_EPOCH};
 use anyhow::Result;
+use bincode::{Decode, Encode};
 use rand::thread_rng;
 use secp256k1_zkp::{Keypair, Message as Secp256k1Message, XOnlyPublicKey, Secp256k1};
 use secp256k1_zkp::schnorr::Signature;
@@ -48,7 +49,7 @@ impl fmt::Display for MessageType {
 }
 
 /// A network message with authentication
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Encode, Decode, Deserialize)]
 pub struct Message {
     /// Unique identifier for this message
     pub message_id: String,
