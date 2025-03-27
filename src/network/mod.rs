@@ -1,4 +1,4 @@
-mod message;
+pub mod message;
 mod error;
 mod peer;
 mod transport;
