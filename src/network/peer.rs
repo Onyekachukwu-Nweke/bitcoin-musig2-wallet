@@ -2,6 +2,7 @@ use std::fmt;
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use bincode::{Decode, Encode};
 use bitcoin::hex::FromHex;
 use secp256k1_zkp::XOnlyPublicKey;
 use serde::{Serialize, Deserialize};
@@ -34,7 +35,7 @@ impl fmt::Display for PeerState {
 }
 
 /// Information about a network peer
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Encode, Decode, Deserialize)]
 pub struct PeerInfo {
     /// Unique identifier for this peer
     pub id: String,

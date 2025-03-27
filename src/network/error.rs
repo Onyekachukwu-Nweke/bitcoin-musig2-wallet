@@ -23,11 +23,14 @@ pub enum NetworkError {
     PeerNotFound(String),
     /// Transport error
     TransportError(String),
+    /// Transport not initialized
+    NotInitialized(String),
     /// Timeout waiting for a response
     Timeout(String),
     /// General network error
     Other(String),
 }
+
 
 impl fmt::Display for NetworkError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -41,6 +44,7 @@ impl fmt::Display for NetworkError {
             NetworkError::AuthenticationError(msg) => write!(f, "Authentication error: {}", msg),
             NetworkError::PeerNotFound(msg) => write!(f, "Peer not found: {}", msg),
             NetworkError::TransportError(msg) => write!(f, "Transport error: {}", msg),
+            NetworkError::NotInitialized(msg) => write!(f, "Transport not initialized: {}", msg),
             NetworkError::Timeout(msg) => write!(f, "Timeout: {}", msg),
             NetworkError::Other(msg) => write!(f, "Network error: {}", msg),
         }
