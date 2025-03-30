@@ -1,9 +1,8 @@
-use secp256k1_zkp::{self, PublicKey, SecretKey, Message, Secp256k1};
+use secp256k1_zkp::{self, PublicKey, SecretKey, Message, Secp256k1, schnorr::Signature};
 use bitcoin::hashes::{sha256, Hash, HashEngine};
 use rand::rngs::OsRng;
 use std::collections::HashMap;
 use anyhow::{anyhow, Result};
-use secp256k1_zkp::secp256k1_zkp_sys::Signature;
 
 /// MuSig2 key aggregation coefficient
 /// Calculated as the hash of L||X_i where L is the multiset of all public keys.
@@ -59,7 +58,7 @@ impl MuSig2 {
 
     /// Generate a new key pair
     pub fn generate_keypair(&self) -> (SecretKey, PublicKey) {
-        let mut rng = OsRng::new().expect("OsRng");
+        let mut rng = OsRng;
         self.secp.generate_keypair(&mut rng)
     }
 
@@ -82,7 +81,7 @@ impl MuSig2 {
 
         let hash = sha256::Hash::from_engine(hasher);
 
-        KeyAggCoef(hash.into_inner())
+        KeyAggCoef(*hash.as_ref())
     }
 
     /// Aggregate public keys using MuSig2 algorithm
@@ -123,7 +122,7 @@ impl MuSig2 {
 
     /// Generate a new secret nonce for signing
     pub fn generate_nonce(&self) -> SecretNonce {
-        let mut rng = OsRng::new().expect("OsRng");
+        let mut rng = OsRng;
 
         let k1 = SecretKey::new(&mut rng);
         let k2 = SecretKey::new(&mut rng);
@@ -179,7 +178,7 @@ impl MuSig2 {
         hasher.input(&session.message[..]);
 
         let b_hash = sha256::Hash::from_engine(hasher);
-        let b = SecretKey::from_slice(&b_hash.into_inner())?;
+        let b = SecretKey::from_slice(&b_hash.as_ref())?;
 
         // Now compute R = ∑(R_i1 + b*R_i2)
         let mut agg_r = None;
@@ -207,7 +206,7 @@ impl MuSig2 {
         challenge_hasher.input(&session.message[..]);
 
         let challenge = sha256::Hash::from_engine(challenge_hasher);
-        session.challenge = Some(challenge.into_inner());
+        session.challenge = Some(challenge);
 
         Ok(())
     }
@@ -239,7 +238,7 @@ impl MuSig2 {
         hasher.input(&session.message[..]);
 
         let b_hash = sha256::Hash::from_engine(hasher);
-        let b = SecretKey::from_slice(&b_hash.into_inner())?;
+        let b = SecretKey::from_slice(&b_hash.as_ref())?;
 
         // Convert challenge to scalar
         let e = SecretKey::from_slice(&session.challenge.unwrap())?;
@@ -267,7 +266,7 @@ impl MuSig2 {
         s_i.add_assign(&e_ai_xi)?;
 
         // Create signature
-        let sig = Signature::from_compact(&s_i[..])?;
+        let sig = Signature::from_slice(&s_i[..])?;
 
         Ok(sig)
     }
@@ -306,7 +305,7 @@ impl MuSig2 {
         // For Schnorr in Bitcoin, this is encoded as r || s
         // However, here we're just returning s since R is stored in the session
 
-        let sig = Signature::from_compact(&s)?;
+        let sig = Signature::from_slice(&s)?;
 
         Ok(sig)
     }
@@ -330,10 +329,10 @@ impl MuSig2 {
         sig_bytes[0..32].copy_from_slice(&r.serialize()[1..33]);  // Remove the prefix byte
         sig_bytes[32..64].copy_from_slice(&s);
 
-        let schnorr_sig = secp256k1::Signature::from_compact(&sig_bytes)?;
+        let schnorr_sig = Signature::from_slice(&sig_bytes)?;
 
         // Verify the signature
-        let result = self.secp.verify(&session.message, &schnorr_sig, &session.agg_pk.agg_pk);
+        let result = self.secp.verify_schnorr(&session.message, &schnorr_sig, &session.agg_pk.agg_pk);
 
         Ok(result.is_ok())
     }
