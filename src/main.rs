@@ -1,5 +1,5 @@
-pub mod network;
-mod crypto;
+// pub mod network;
+pub mod crypto;
 
 fn main() {
     println!("Hello, world!");

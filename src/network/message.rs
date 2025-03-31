@@ -10,7 +10,7 @@ use secp256k1_zkp::schnorr::Signature;
 use bitcoin::hashes::{Hash, sha256, HashEngine};
 
 /// The types of messages that can be sent over the network
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Decode, Encode, Serialize, Deserialize)]
 pub enum MessageType {
     /// Ping message to check if a peer is alive
     Ping,
