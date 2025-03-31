@@ -41,8 +41,6 @@ pub struct MuSig2Session {
     pub agg_r: Option<PublicKey>,
     /// Challenge value e
     pub challenge: Option<[u8; 32]>,
-    /// Whether R was negated in x_only_public_key()
-    pub r_is_negated: bool,
 }
 
 /// MuSig2 implementation
@@ -158,7 +156,6 @@ impl MuSig2 {
             public_nonces,
             agg_r: None,
             challenge: None,
-            r_is_negated: false,
         }
     }
 
@@ -168,6 +165,7 @@ impl MuSig2 {
             return Ok(());  // Already computed
         }
 
+        // Generate the aggregated R value
         // First, compute the commitment hash b = H(L||R_1^(1)||...||R_n^(1)||m)
         let mut hasher = sha256::Hash::engine();
 
@@ -184,6 +182,8 @@ impl MuSig2 {
 
         // Add the message
         hasher.input(&session.message[..]);
+
+        println!("Session message: {:?}", session.message);
 
         let b_hash = sha256::Hash::from_engine(hasher);
         let b = SecretKey::from_slice(&b_hash.as_ref())?;
@@ -212,24 +212,20 @@ impl MuSig2 {
         // Get x-only public key for challenge calculation
         let (xonly_pk, _) = session.agg_pk.agg_pk.x_only_public_key();
 
-        // For the challenge calculation, we use the x-only form of R
-        // which automatically handles the BIP340 requirement for even y-coordinate
-        let (xonly_r, is_r_negated) = final_r.x_only_public_key();
-
-        // Store whether R was negated as part of the session (we'll need this for signing)
-        // We're adding a new field to session to track this information
-        session.r_is_negated = is_r_negated;
-
         // Compute the Schnorr challenge e = H(R||P||m)
         // Where R and P are x-only (32-byte) public keys
         let mut challenge_hasher = sha256::Hash::engine();
 
-        // Use the x-only serialized forms
+        // Extract the x-coordinate of R (32 bytes)
+        let (xonly_r, _) = final_r.x_only_public_key();
         let r_bytes = xonly_r.serialize();
-        let pk_bytes = xonly_pk.serialize();
-
         challenge_hasher.input(&r_bytes);
+
+        // Use the x-only public key P
+        let pk_bytes = xonly_pk.serialize();
         challenge_hasher.input(&pk_bytes);
+
+        // Add the message
         challenge_hasher.input(&session.message[..]);
 
         let challenge = sha256::Hash::from_engine(challenge_hasher);
@@ -273,6 +269,8 @@ impl MuSig2 {
 
         hasher.input(&session.message[..]);
 
+        println!("Session message: {:?}", session.message);
+
         let b_hash = sha256::Hash::from_engine(hasher);
         let b = SecretKey::from_slice(&b_hash.as_ref())?;
 
@@ -285,12 +283,7 @@ impl MuSig2 {
         // Compute partial signature s_i = k_i1 + b*k_i2 + e*a_i*x_i
         // First: k_i = k_i1 + b*k_i2
         let k_i2_b = nonce.k2.mul_tweak(&b.into())?;
-        let mut k_i = nonce.k1.add_tweak(&k_i2_b.into())?;
-
-        // If R was negated during x_only_public_key conversion, we need to negate our nonce
-        if session.r_is_negated {
-            k_i = k_i.negate();
-        }
+        let k_i = nonce.k1.add_tweak(&k_i2_b.into())?;
 
         // Next: e*a_i
         let e_ai = e.mul_tweak(&a_i.into())?;
@@ -323,6 +316,11 @@ impl MuSig2 {
         // Initialize s with the first partial signature
         let mut s = SecretKey::from_slice(&partial_sigs[0])?;
 
+        // Print each partial signature
+        for (i, sig) in partial_sigs.iter().enumerate() {
+            println!("Debug: Partial Signature {} = {:?}", i, sig);
+        }
+
         // Add the rest of the partial signatures
         for sig in &partial_sigs[1..] {
             let next_s = SecretKey::from_slice(sig)?;
@@ -342,10 +340,9 @@ impl MuSig2 {
         // Combine into the final signature
         let mut sig_bytes = [0u8; 64];
         sig_bytes[0..32].copy_from_slice(&r_bytes);
+        println!("Sig bytes: {:?}", sig_bytes);
         sig_bytes[32..64].copy_from_slice(&s_bytes);
-
-        println!("Final signature R part: {:?}", &r_bytes[0..32]);
-        println!("Final signature s part: {:?}", &s_bytes[0..32]);
+        println!("Sig bytes 2: {:?}", sig_bytes);
 
         // Create the signature from the combined bytes
         let signature = Signature::from_slice(&sig_bytes)?;
@@ -363,42 +360,19 @@ impl MuSig2 {
             return Err(anyhow!("Challenge not computed"));
         }
 
+        // Print debug values before verification
+        println!("Debug: Aggregated Public Key = {:?}", session.agg_pk.agg_pk);
+        println!("Debug: Aggregated R Value = {:?}", session.agg_r);
+        println!("Debug: Message = {:?}", session.message);
+        println!("Debug: Signature = {:?}", signature);
+
         // Get the x-only public key for verification
         let (xonly_pk, _) = session.agg_pk.agg_pk.x_only_public_key();
 
-        // Debug information to help diagnose issues
-        println!("X-only public key: {:?}", xonly_pk.serialize());
+        println!("Session message: {:?}", session.message);
 
-        // Get info about the R point that was used in the signature
-        let agg_r = session.agg_r.unwrap();
-        let (xonly_r, is_r_negated) = agg_r.x_only_public_key();
-        println!("X-only R used: {:?}", xonly_r.serialize());
-        println!("R was negated: {}", is_r_negated);
-
-        // This should match the r_is_negated stored in the session
-        assert_eq!(is_r_negated, session.r_is_negated, "R negation state mismatch");
-
-        // Print information about the signature being verified
-        println!("Signature R part: {:?}", &signature.serialize()[0..32]);
-        println!("Signature s part: {:?}", &signature.serialize()[32..64]);
-
-        // Verify the Schnorr signature using the secp256k1 context
+        // Verify the Schnorr signature
         let result = self.secp.verify_schnorr(signature, &session.message, &xonly_pk);
-
-        // Try alternative approach if direct verification fails
-        if result.is_err() {
-            println!("Direct verification failed, trying with raw components...");
-
-            // Extract R and s from the signature
-            let sig_bytes = signature.serialize();
-            let r_part = &sig_bytes[0..32];
-            let s_part = &sig_bytes[32..64];
-
-            // Verify R and s manually
-            println!("R from signature: {:?}", r_part);
-            println!("R from xonly_r:   {:?}", xonly_r.serialize());
-            println!("R match: {}", r_part == xonly_r.serialize().as_slice());
-        }
 
         Ok(result.is_ok())
     }
