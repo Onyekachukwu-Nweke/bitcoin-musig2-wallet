@@ -1,4 +1,3 @@
-use nostr::prelude::Error;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -12,8 +11,8 @@ pub enum MusigError {
     #[error("Serialization error: {0}")]
     Serde(#[from] serde_json::Error),
 
-    #[error("Nostr error: {0}")]
-    Nostr(#[from] Error),
+    // #[error("Nostr error: {0}")]
+    // Nostr(#[from] String),
 
     #[error("Invalid signature")]
     InvalidSignature,

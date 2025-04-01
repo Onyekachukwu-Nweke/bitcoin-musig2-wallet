@@ -1,10 +1,11 @@
-mod bin;
+use clap::{Parser, Subcommand};
+use crate::cli::{coordinator, signer};
+use crate::error::Result;
+
+pub mod cli;
 // mod core;
 mod error;
-mod musig2;
-
-use clap::{Parser, Subcommand};
-use crate::error::Result;
+pub mod musig2;
 
 #[derive(Parser)]
 #[command(name = "musig2-nostr")]
@@ -17,9 +18,9 @@ struct Cli {
 #[derive(Subcommand)]
 enum Role {
     /// Run as a signer
-    Signer,
+    Signer(signer::SignerCli),
     /// Run as a coordinator
-    Coordinator,
+    Coordinator(coordinator::CoordinatorCli),
 }
 
 #[tokio::main]
@@ -27,7 +28,7 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.role {
-        Role::Signer => bin::signer::run_signer_cli().await,
-        Role::Coordinator => bin::coordinator::run_coordinator_cli().await,
+        Role::Signer(signer_cli) => signer::run_signer_cli(signer_cli).await,
+        Role::Coordinator(coordinator_cli) => coordinator::run_coordinator_cli(coordinator_cli).await,
     }
 }

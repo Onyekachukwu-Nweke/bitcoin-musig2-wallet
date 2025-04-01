@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use secp256k1::PublicKey;
+use crate::musig2::keys::Keys;
 use crate::error::Result;
 
 #[derive(Parser)]
@@ -31,14 +31,14 @@ pub enum SignerCommand {
     },
 }
 
-pub async fn run_signer_cli() -> Result<()> {
-    let cli = SignerCli::parse();
+pub async fn run_signer_cli(cli: SignerCli) -> Result<()> {
+    // let cli = SignerCli::parse();
 
     match cli.command {
         SignerCommand::GenerateKey => {
-            let keypair = MusigKeyPair::new()?;
-            println!("Secret key: {}", hex::encode(keypair.secret_key().as_ref()));
-            println!("Public key: {}", keypair.public_key());
+            let keys = Keys::new();
+            println!("Secret key: {}", hex::encode(keys.keypair.secret_key().as_ref()));
+            println!("Public key: {}", keys.keypair.public_key());
         }
         SignerCommand::StartSession { session_id, pubkeys, message } => {
             // TODO: Implement session start
