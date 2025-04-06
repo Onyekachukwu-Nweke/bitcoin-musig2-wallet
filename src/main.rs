@@ -69,9 +69,6 @@ async fn main() -> Result<()> {
 
     let relay_urls = vec!["wss://relay.damus.io".to_string(), "wss://relay.nostr.band".to_string()];
     let secp = Secp256k1::new();
-    // let network = Network::Testnet;
-    // let client = ElectrumClient::new("ssl://electrum.blockstream.info:60002")?;
-    // let blockchain = ElectrumBlockchain::from(client);
 
     match matches.subcommand() {
         Some(("signer", signer_matches)) => {
@@ -81,10 +78,10 @@ async fn main() -> Result<()> {
 
             let mut signer = if fs::metadata("signer_keys.enc").is_ok() && Confirm::new("Load saved keys?").with_default(true).prompt().unwrap() {
                 let password = Text::new("Enter password to decrypt keys:").prompt().unwrap();
-                Signer::load_keys(&password, coordinator_pk, session_id.clone())?
+                Signer::load_keys(&password, coordinator_pk, session_id.clone()).unwrap()
             } else if Confirm::new("Generate new keys?").with_default(true).prompt().unwrap() {
                 let password = Text::new("Enter password to encrypt new keys:").prompt().unwrap();
-                Signer::generate_and_store_keys(&password, coordinator_pk, session_id.clone())?
+                Signer::generate_and_store_keys(&password, coordinator_pk, session_id.clone()).unwrap()
             } else {
                 let nostr_private_key = prompt_or_get("Enter your Nostr private key (HEX):", signer_matches.get_one::<String>("nostr_private_key"))?;
                 let musig2_secret_key = prompt_or_get("Enter your MuSig2 secret key (HEX):", signer_matches.get_one::<String>("musig2_secret_key"))?;
@@ -94,19 +91,19 @@ async fn main() -> Result<()> {
             };
 
             let mut client = signer.client.lock().await;
-            initialize_nostr(&mut client, relay_urls.clone()).await?;
+            initialize_nostr(&mut client, relay_urls.clone()).await.unwrap();
             drop(client);
 
             if !fs::metadata("signer_keys.enc").is_ok() && Confirm::new("Save keys?").with_default(false).prompt().unwrap() {
                 let password = Text::new("Enter password to encrypt keys:").prompt().unwrap();
-                signer.save_keys(&password)?;
+                signer.save_keys(&password).unwrap();
             }
 
             println!("Signer initialized with MuSig2 public key: {:?}", signer.public_key);
             println!("Nostr public key: {:?}", signer.nostr_keys.public_key());
 
             if Confirm::new("Register with coordinator?").with_default(true).prompt().unwrap() {
-                signer.register_with_coordinator().await?;
+                signer.register_with_coordinator().await.unwrap();
             }
         }
         Some(("coordinator", coord_matches)) => {
@@ -119,12 +116,12 @@ async fn main() -> Result<()> {
             let mut coordinator = Coordinator::new(nostr_keys, expected_signers, session_id.clone());
 
             let mut client = coordinator.client.lock().await;
-            initialize_nostr(&mut client, relay_urls.clone()).await?;
+            initialize_nostr(&mut client, relay_urls.clone()).await.unwrap();
             drop(client);
 
             println!("Coordinator initialized for session: {}", session_id);
 
-            coordinator.collect_signer_registrations().await?;
+            coordinator.collect_signer_registrations().await.unwrap();
             println!("All signers registered: {:?}", coordinator.signers);
 
             let musig2_pks: Vec<PublicKey> = coordinator.signers.values().cloned().collect();

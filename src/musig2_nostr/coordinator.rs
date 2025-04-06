@@ -1,7 +1,7 @@
 use super::nostr_utils::initialize_nostr;
 use super::session::SessionState;
 use musig2::{
-    CompactSignature, FirstRound, KeyAggContext, PartialSignature, PubNonce, secp256k1::PublicKey, SecondRound,
+    KeyAggContext, PartialSignature, PubNonce, secp256k1::PublicKey,
 };
 use nostr::{Event, Filter, Keys as NostrKeys, PublicKey as NostrPublicKey, Kind, Tag};
 use nostr_sdk::Client;

@@ -5,7 +5,7 @@ use aes_gcm::aead::generic_array::GenericArray;
 use std::fs;
 use std::str::FromStr;
 use hex;
-use musig2::secp256k1::{SecretKey};
+use secp256k1::{SecretKey, Secp256k1};
 use rand::{Rng, thread_rng};
 use sha256;
 
@@ -20,7 +20,7 @@ impl KeyStore {
     pub fn new(musig2_secret_key: SecretKey, nostr_keys: &NostrKeys) -> Result<Self, Box<dyn std::error::Error>> {
         Ok(KeyStore {
             musig2_secret_key: hex::encode(musig2_secret_key.secret_bytes()),
-            nostr_private_key: hex::encode(nostr_keys.secret_key()?.to_bytes()),
+            nostr_private_key: hex::encode(nostr_keys.secret_key().to_secret_bytes()),
         })
     }
 
@@ -35,7 +35,7 @@ impl KeyStore {
         // Create KeyStore instance
         let key_store = KeyStore {
             musig2_secret_key: hex::encode(musig2_secret_key.secret_bytes()),
-            nostr_private_key: hex::encode(nostr_keys.secret_key()?.to_bytes()),
+            nostr_private_key: hex::encode(nostr_keys.secret_key().to_secret_bytes()),
         };
 
         // Encrypt and save to file
@@ -72,7 +72,7 @@ fn encrypt_data(data: &str, password: &str) -> Result<Vec<u8>, Box<dyn std::erro
     let cipher = Aes256Gcm::new(key);
     let nonce = thread_rng().gen::<[u8; 12]>();
     let payload = Payload { msg: data.as_bytes(), aad: b"" };
-    let encrypted = cipher.encrypt(&nonce.into(), payload)?;
+    let encrypted = cipher.encrypt(&nonce.into(), payload).unwrap();
     Ok([nonce.to_vec(), encrypted].concat())
 }
 
