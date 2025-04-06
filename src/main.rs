@@ -5,10 +5,10 @@ use crate::error::Result;
 pub mod cli;
 // mod core;
 mod error;
-pub mod musig2;
+pub mod musig2_nostr;
 
 #[derive(Parser)]
-#[command(name = "musig2-nostr")]
+#[command(name = "musig2_nostr-nostr")]
 #[command(about = "Musig2 implementation with Nostr integration", long_about = None)]
 struct Cli {
     #[command(subcommand)]

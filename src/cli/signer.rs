@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use crate::musig2::keys::Keys;
+use crate::musig2_nostr::keys::Keys;
 use crate::error::Result;
 
 #[derive(Parser)]
@@ -32,8 +32,6 @@ pub enum SignerCommand {
 }
 
 pub async fn run_signer_cli(cli: SignerCli) -> Result<()> {
-    // let cli = SignerCli::parse();
-
     match cli.command {
         SignerCommand::GenerateKey => {
             let keys = Keys::new();

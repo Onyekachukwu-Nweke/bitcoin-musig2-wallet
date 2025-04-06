@@ -1,6 +1,6 @@
-// use musig2::{KeyAggContext, secp256k1::PublicKey, AggNonce, PartialSignature, aggregate_partial_signatures};
-// use musig2::secp256k1::Message;
-// use musig2::secp256k1::schnorr::Signature;
+// use musig2_nostr::{KeyAggContext, secp256k1::PublicKey, AggNonce, PartialSignature, aggregate_partial_signatures};
+// use musig2_nostr::secp256k1::Message;
+// use musig2_nostr::secp256k1::schnorr::Signature;
 //
 // pub struct Coordinator {
 //     pub key_agg_ctx: KeyAggContext,

@@ -1,7 +1,7 @@
-// use musig2::{FirstRound, KeyAggContext, NonceSeed, PartialSignature, PubNonce, SecNonceSpices};
-// use musig2::secp256k1::Message;
+// use musig2_nostr::{FirstRound, KeyAggContext, NonceSeed, PartialSignature, PubNonce, SecNonceSpices};
+// use musig2_nostr::secp256k1::Message;
 // use rand::rngs::OsRng;
-// use crate::musig2::keys::Keys;
+// use crate::musig2_nostr::keys::Keys;
 //
 // pub struct Signer {
 //     pub id: String,

@@ -1,5 +1,4 @@
 use clap::{Parser, Subcommand};
-use crate::cli::signer::SignerCli;
 use crate::error::Result;
 
 #[derive(Parser)]
@@ -29,8 +28,6 @@ pub enum CoordinatorCommand {
 }
 
 pub async fn run_coordinator_cli(cli: CoordinatorCli) -> Result<()> {
-    // let cli = CoordinatorCli::parse();
-
     match cli.command {
         CoordinatorCommand::InitSession { session_id, pubkeys, message } => {
             // TODO: Implement session initialization
