@@ -1,6 +1,6 @@
 use bdk::bitcoin::secp256k1::SecretKey;
 use bdk::bitcoin::PublicKey;
-use crate::musig2_nostr::{Signer, initialize_nostr};
+use crate::musig2_nostr::{signer::Signer, initialize_nostr};
 use nostr::Keys as NostrKeys;
 use clap::ArgMatches;
 use inquire::{Confirm, Text};
@@ -9,7 +9,7 @@ use std::str::FromStr;
 
 use crate::cli::utils::prompt_or_get;
 
-pub async fn run(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn run_signer_cli(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     let session_id = prompt_or_get("Enter session ID:", matches.get_one::<String>("session_id"))?;
     let coordinator_nostr_pubkey = prompt_or_get("Enter Coordinator's Nostr public key (HEX):", matches.get_one::<String>("coordinator_nostr_pubkey"))?;
     let coordinator_pk = PublicKey::from_str(&coordinator_nostr_pubkey)?;

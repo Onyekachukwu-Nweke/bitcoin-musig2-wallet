@@ -1,7 +1,7 @@
 pub mod keystore;
-mod signer;
-mod coordinator;
-mod session;
+pub mod signer;
+pub mod coordinator;
+pub mod session;
 pub mod nostr_utils;
 mod constants;
 
