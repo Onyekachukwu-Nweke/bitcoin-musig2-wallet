@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use crate::musig2_nostr::keys::Keys;
+use crate::musig2_nostr::keystore::Keys;
 use crate::error::Result;
 
 #[derive(Parser)]

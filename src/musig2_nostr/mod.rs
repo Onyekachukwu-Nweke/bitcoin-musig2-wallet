@@ -1,4 +1,4 @@
-pub mod keys;
+pub mod keystore;
 mod signer;
 mod coordinator;
 mod session;

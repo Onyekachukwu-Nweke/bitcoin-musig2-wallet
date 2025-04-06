@@ -2,7 +2,7 @@ use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use musig2::{PubNonce, PartialSignature, secp256k1::PublicKey};
 use std::fs;
-use nostr_sdk::PublicKey as NostrPublicKey;
+use nostr_sdk::{PublicKey as NostrPublicKey};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionState {
